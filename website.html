@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gaze Experiment</title>
+  <style>
+    #rating-container {
+      margin-top: 20px;
+      display: none; /* Hide until the video is played */
+    }
+    input[type="range"] {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gaze Experiment</h1>
+  <video id="experiment-video" width="640" controls>
+    <source src="your-video-file.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <div id="rating-container">
+    <h2>Rate the Plausibility</h2>
+    <input type="range" id="plausibility-rating" min="0" max="100" value="50">
+    <button id="submit-rating">Submit Rating</button>
+  </div>
+
+  <script>
+    const video = document.getElementById('experiment-video');
+    const ratingContainer = document.getElementById('rating-container');
+
+    // Restrict video playback to one time
+    video.addEventListener('ended', () => {
+      video.controls = false; // Disable controls after video ends
+      ratingContainer.style.display = 'block'; // Show rating scale
+    });
+
+    video.addEventListener('play', () => {
+      video.removeEventListener('play', restrictReplay);
+    });
+
+    function restrictReplay() {
+      video.pause();
+      alert('You can only play the video once!');
+    }
+
+    video.addEventListener('play', restrictReplay);
+
+    document.getElementById('submit-rating').addEventListener('click', () => {
+      const rating = document.getElementById('plausibility-rating').value;
+      alert(`You rated the plausibility as: ${rating}`);
+      // You can send the rating to a server or save it locally
+    });
+  </script>
+</body>
+</html>
