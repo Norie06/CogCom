@@ -30,6 +30,7 @@ df <- read.csv("data.csv")
 
 ```
 
+<<<<<<< HEAD
 ```{r NMM Fitting mixed effects model}
 #NMM
 
@@ -68,6 +69,10 @@ ggplot(res_df, aes(x = Fitted, y = Residuals)) +
 
 ```{r AS}
 #AS
+=======
+
+```{r}
+>>>>>>> main
 
 ggplot(df, aes(x = Gaze, y = Score, fill = Gaze)) +
   geom_boxplot()+
@@ -77,8 +82,12 @@ ggplot(df, aes(x = Gaze, y = Score, fill = Gaze)) +
 
 ```
 
+<<<<<<< HEAD
 ```{r AS}
 #AS
+=======
+```{r}
+>>>>>>> main
 
 m1 <- lmer(Score ~ Gaze + Audio + (1 | Participant_ID), 
            data = df)
@@ -88,8 +97,12 @@ summary(m1)
 ```
 
 
+<<<<<<< HEAD
 ```{r AS}
 #AS
+=======
+```{r}
+>>>>>>> main
 
 df_on <- df %>% filter(Audio == "On")
 df_off <- df %>% filter(Audio == "Off")
