@@ -26,8 +26,24 @@ pacman::p_load(tidyverse,
 
 ```{r loading data}
 
-df <- read.csv("data.csv")
+df <- read.csv("CogCom data - Data.csv")
 
+```
+
+```{r NMM Residual assumptions}
+
+fitted <- fitted(model)
+residuals <- resid(model)
+
+res_df <- data.frame(Fitted = fitted, Residuals = residuals)
+
+ggplot(res_df, aes(x = Fitted, y = Residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, color = "red") +
+  theme_minimal() +
+  labs(title = "Residuals vs. Fitted Values", x = "Fitted Values", y = "Residuals")
+
+#No funnel shape, we're good :) -> homoscedastic data
 ```
 
 
