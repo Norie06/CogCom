@@ -20,13 +20,28 @@ pacman::p_load(tidyverse,
                dplyr, 
                ggplot2, 
                scales,
-               lme4)
+               lme4,
+               lmerTest)
 
 ```
 
 ```{r loading data}
 
-df <- read.csv("CogCom data - Data.csv")
+df <- read.csv("data.csv")
+
+```
+
+<<<<<<< HEAD
+```{r NMM Fitting mixed effects model}
+#NMM
+
+library(lme4)
+
+# Fit the model
+model <- lmer(Score ~ Gaze + Audio + Gender + Age + (1|Participant_ID) + (1|Story), data = df)
+
+# Summary of the model
+summary(model)
 
 ```
 
@@ -46,8 +61,38 @@ ggplot(res_df, aes(x = Fitted, y = Residuals)) +
 #No funnel shape, we're good :) -> homoscedastic data
 ```
 
+```{r NMM Variance Inflation Factor}
 
-```{r}
+vif(model)
+
+#There is no indication of high multicollinearity (which would be VIF > 5-10 values)
+```
+
+```{r NMM Checking for outliers}
+
+# Calculate Cook's distance for each data point
+cooks_dist <- cooks.distance(model)
+
+# Plot Cook's distance
+plot(cooks_dist, type = "h", main = "Cook's Distance", 
+     xlab = "Index", ylab = "Cook's Distance")
+abline(h = 1, col = "red")  # Threshold for influential points
+
+print(cooks_dist)
+
+# Calculate leverage
+leverage <- hatvalues(model)
+
+# Plot leverage
+plot(leverage, type = "h", main = "Leverage", 
+     xlab = "Index", ylab = "Leverage")
+abline(h = 2 * mean(leverage), col = "red")  # Threshold for high leverage
+
+```
+
+
+```{r AS}
+#AS
 
 ggplot(df, aes(x = Gaze, y = Score, fill = Gaze)) +
   geom_boxplot()+
@@ -57,7 +102,9 @@ ggplot(df, aes(x = Gaze, y = Score, fill = Gaze)) +
 
 ```
 
-```{r}
+<<<<<<< HEAD
+```{r AS}
+#AS
 
 m1 <- lmer(Score ~ Gaze + Audio + (1 | Participant_ID), 
            data = df)
@@ -67,7 +114,9 @@ summary(m1)
 ```
 
 
-```{r}
+<<<<<<< HEAD
+```{r AS}
+#AS
 
 df_on <- df %>% filter(Audio == "On")
 df_off <- df %>% filter(Audio == "Off")
