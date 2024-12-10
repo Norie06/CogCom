@@ -31,7 +31,6 @@ df <- read.csv("data.csv")
 
 ```
 
-<<<<<<< HEAD
 ```{r NMM Fitting mixed effects model}
 #NMM
 
@@ -94,6 +93,42 @@ abline(h = 2 * mean(leverage), col = "red")  # Threshold for high leverage
 ```{r AS}
 #AS
 
+library(lme4)
+
+# Fit the model
+model <- lmer(Score ~ Gaze + Audio + Gender + Age + (1|Participant_ID) + (1|Story), data = df)
+
+# Summary of the model
+summary(model)
+
+```
+
+```{r NMM Residual assumptions}
+
+fitted <- fitted(model)
+residuals <- resid(model)
+
+res_df <- data.frame(Fitted = fitted, Residuals = residuals)
+
+ggplot(res_df, aes(x = Fitted, y = Residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, color = "red") +
+  theme_minimal() +
+  labs(title = "Residuals vs. Fitted Values", x = "Fitted Values", y = "Residuals")
+
+#No funnel shape, we're good :) -> homoscedastic data
+```
+
+```{r NMM Checking for outliers}
+
+
+
+```
+
+
+```{r AS}
+#AS
+
 ggplot(df, aes(x = Gaze, y = Score, fill = Gaze)) +
   geom_boxplot()+
   labs(x = "Gaze direction",
@@ -102,7 +137,6 @@ ggplot(df, aes(x = Gaze, y = Score, fill = Gaze)) +
 
 ```
 
-<<<<<<< HEAD
 ```{r AS}
 #AS
 
@@ -114,7 +148,6 @@ summary(m1)
 ```
 
 
-<<<<<<< HEAD
 ```{r AS}
 #AS
 
