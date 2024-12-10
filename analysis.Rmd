@@ -1,0 +1,79 @@
+---
+title: "Cogcom project"
+output: pdf_document
+date: "2024-12-09"
+---
+
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)  
+
+knitr::opts_knit$set(root.dir = '/work/CogSci_Methods01/cogcom-project/CogCom') 
+rm(list=ls())
+```
+
+## Loading relevant libraries and data
+
+```{r libraries, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(afex)
+library(lme4)
+
+```
+```{r loading_data}
+# Loading the data
+
+df <- read_csv("CogCom_data.csv")
+
+head(df)
+
+df <- df %>% mutate(Gaze = as.factor(Gaze))
+df <- df %>% mutate(Audio = as.factor(Audio))
+```
+```{r plots}
+
+df_on <- df %>% filter(Audio == "On")
+df_off <- df %>% filter(Audio == "Off")
+
+df %>% ggplot(aes(Gaze,Score)) + geom_point()
+df %>% ggplot(aes(x = Gaze, y = Score, color = Participant_ID,  group = Participant_ID)) +
+  geom_point() + geom_line() + theme_minimal() + theme(legend.position = "none")
+
+df_on %>% ggplot(aes(Gaze,Score)) + geom_point()
+df_on %>% ggplot(aes(x = Gaze, y = Score, color = Participant_ID,  group = Participant_ID)) +
+  geom_point() + geom_line() + theme_minimal() + theme(legend.position = "none")
+
+df_off %>% ggplot(aes(Gaze,Score)) + geom_point()
+df_off %>% ggplot(aes(x = Gaze, y = Score, color = Participant_ID,  group = Participant_ID)) +
+  geom_point() + geom_line() + theme_minimal() + theme(legend.position = "none")
+
+df %>% ggplot(aes(Gaze,Score))+
+    geom_bar(stat = 'summary',
+           fun = "mean",
+           width = 0.5) +
+    geom_errorbar(stat = 'summary',
+                fun.data = "mean_se",
+                width = 0.2) +
+     labs(x = "Gaze direction", 
+        y = "Average credibility score (scale from 1-10)", 
+        title = "Average credibility score by gaze direction") +
+  theme_minimal()
+
+ggplot(df, aes(x = Gaze, y = Score, fill = Gaze)) +
+  geom_boxplot()+
+  labs(x = "Gaze direction",
+       y = "Credibility")+
+         theme_minimal()
+
+```
+
+
+```{r mixed_effects_model}
+
+m1 <- lmer(Score ~ Gaze + Audio + (1 | Participant_ID), 
+           data = df)
+
+summary(m1)
+```
+
+
