@@ -1,0 +1,83 @@
+---
+
+title: "Trustworthiness data analysis"
+
+author: Arina Ljastsenko, Aurelija Spunde, Nora Milena Modla
+
+date: 10/12-2024
+
+output: html_document
+
+---
+
+```{r loading packages}
+
+knitr::opts_chunk$set(echo = TRUE, include = TRUE, message = FALSE, warning = FALSE)  
+
+pacman::p_load(tidyverse,  
+               pastecs,  
+               car, 
+               dplyr, 
+               ggplot2, 
+               scales,
+               lme4)
+
+```
+
+```{r loading data}
+
+df <- read.csv("data.csv")
+
+```
+
+
+```{r}
+
+ggplot(df, aes(x = Gaze, y = Score, fill = Gaze)) +
+  geom_boxplot()+
+  labs(x = "Gaze direction",
+       y = "Credibility")+
+         theme_minimal()
+
+```
+
+```{r}
+
+m1 <- lmer(Score ~ Gaze + Audio + (1 | Participant_ID), 
+           data = df)
+
+summary(m1)
+
+```
+
+
+```{r}
+
+df_on <- df %>% filter(Audio == "On")
+df_off <- df %>% filter(Audio == "Off")
+
+df %>% ggplot(aes(Gaze,Score)) + geom_point()
+df %>% ggplot(aes(x = Gaze, y = Score, color = Participant_ID,  group = Participant_ID)) +
+  geom_point() + geom_line() + theme_minimal() + theme(legend.position = "none")
+
+df_on %>% ggplot(aes(Gaze,Score)) + geom_point()
+df_on %>% ggplot(aes(x = Gaze, y = Score, color = Participant_ID,  group = Participant_ID)) +
+  geom_point() + geom_line() + theme_minimal() + theme(legend.position = "none")
+
+df_off %>% ggplot(aes(Gaze,Score)) + geom_point()
+df_off %>% ggplot(aes(x = Gaze, y = Score, color = Participant_ID,  group = Participant_ID)) +
+  geom_point() + geom_line() + theme_minimal() + theme(legend.position = "none")
+
+df %>% ggplot(aes(Gaze,Score))+
+    geom_bar(stat = 'summary',
+           fun = "mean",
+           width = 0.5) +
+    geom_errorbar(stat = 'summary',
+                fun.data = "mean_se",
+                width = 0.2) +
+     labs(x = "Gaze direction", 
+        y = "Average credibility score (scale from 1-10)", 
+        title = "Average credibility score by gaze direction") +
+  theme_minimal()
+
+```
