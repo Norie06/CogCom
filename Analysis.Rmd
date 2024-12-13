@@ -21,13 +21,15 @@ pacman::p_load(tidyverse,
                ggplot2, 
                scales,
                lme4,
-               lmerTest)
+               lmerTest,
+               afex, 
+               emmeans)
 
 ```
 
 ```{r loading data}
 
-df <- read.csv("data.csv")
+df <- read.csv("CogCom data - Data.csv")
 
 ```
 
@@ -41,6 +43,53 @@ model <- lmer(Score ~ Gaze + Audio + Gender + Age + (1|Participant_ID) + (1|Stor
 summary(model)
 
 ```
+
+```{r AL Checking linearity}
+#Check linearity
+model <- lm(Score ~ Audio + Gaze, data = df)
+plot(model)
+
+#Check the normality of score
+round(pastecs :: stat.desc(df$Score, basic = FALSE, norm = TRUE), digits = 2)
+hist(df$Score)
+qqnorm(df$Score)
+qqline(df$Score)
+
+#Data is not normal. We should try transforming it
+```
+
+```{r AL Transformation}
+#Data transformation attempt
+round(pastecs :: stat.desc(log(df$Score), basic = FALSE, norm = TRUE), digits = 2)
+hist(df$Score)
+
+#Data is not normal. We should use non-parametric test
+```
+
+```{r AL Homogeneity}
+#Checking for Homogeneity of Variance
+ggplot(df, aes(x = Gaze, y = Score, fill = Gaze)) +
+  geom_boxplot()+
+  labs(x = "Gaze direction",
+       y = "Credibility")+
+         theme_minimal()
+
+#The spread of data (box length) is similar across groups, variance is homogeneous.
+```
+
+
+
+```{r AL Random intercept model}
+# Random intercept model
+model_wow <- lmer(Score ~ Audio + (1 | Gaze), data = df)
+
+# Random intercept and slope model
+#model <- lmer(response ~ predictor + (predictor | group), data = dataset)
+
+summary(model_wow)
+```
+
+
 
 ```{r NMM Residual assumptions}
 
@@ -140,3 +189,66 @@ df %>% ggplot(aes(Gaze,Score))+
   theme_minimal()
 
 ```
+
+```{r AS glmem_gamma}
+
+# Fit a Generalized Linear Mixed Effects Model with Gamma distribution
+model_gamma_slope <- glmer(Score ~ Gaze + Audio + (1 + Gaze |Participant_ID), 
+                     data = df, 
+                     family = Gamma(link = "identity"))
+
+# View the model summary
+summary(model_gamma_slope)
+
+# Checking normality of residuals for model_gamma_slope
+
+# Check residuals visually
+
+
+# Plot residuals vs fitted values
+plot(fitted(model_gamma_slope), resid(model_gamma_slope), main = "Residuals vs Fitted", xlab = "Fitted values", ylab = "Residuals")
+abline(h = 0, col = "red")  # Adding a reference line at 0
+
+# Histogram of residuals
+hist(resid(model_gamma_slope), main = "Histogram of Residuals", xlab = "Residuals", breaks = 20)
+
+# Q-Q plot of residuals
+qqnorm(resid(model_gamma_slope))
+qqline(resid(model_gamma_slope), col = "red")  # Adding a reference line
+
+shapiro.test(resid(model_gamma_slope))
+
+# Plot residuals vs predictor variables
+plot(df$Gaze, resid(model_gamma_slope), main = "Residuals vs Gaze", xlab = "Gaze", ylab = "Residuals")
+
+# Get the residual deviance and residual degrees of freedom
+residual_deviance <- deviance(model_gamma_slope)
+residual_df <- df.residual(model_gamma_slope)
+
+# Calculate the dispersion
+dispersion <- residual_deviance / residual_df
+
+# Print the dispersion value
+dispersion
+
+```
+
+```{r AS post-hoc}
+
+# Perform pairwise comparisons for Gaze and AudioOn
+emmeans_model <- emmeans(model_gamma_slope, ~ Gaze + Audio)
+summary(emmeans_model)
+# Pairwise comparisons
+contrast(emmeans_model, method = "pairwise")
+
+# Create a plot of pairwise comparisons
+ggplot(as.data.frame(emmeans_model), aes(x = Gaze, y = emmean, color = Audio)) +
+  geom_point() +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "Post-hoc comparisons of Gaze and Audio")
+
+plot(emmeans_model) + coord_flip() + theme_minimal()
+
+```
+
