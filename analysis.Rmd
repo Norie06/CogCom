@@ -18,12 +18,13 @@ rm(list=ls())
 library(tidyverse)
 library(afex)
 library(lme4)
+library(emmeans)
 
 ```
 ```{r loading_data}
 # Loading the data
 
-df <- read_csv("CogCom_data.csv")
+df <- read_csv("CogCom-data.csv")
 
 head(df)
 
@@ -32,48 +33,110 @@ df <- df %>% mutate(Audio = as.factor(Audio))
 ```
 ```{r plots}
 
-df_on <- df %>% filter(Audio == "On")
-df_off <- df %>% filter(Audio == "Off")
-
-df %>% ggplot(aes(Gaze,Score)) + geom_point()
-df %>% ggplot(aes(x = Gaze, y = Score, color = Participant_ID,  group = Participant_ID)) +
-  geom_point() + geom_line() + theme_minimal() + theme(legend.position = "none")
-
-df_on %>% ggplot(aes(Gaze,Score)) + geom_point()
-df_on %>% ggplot(aes(x = Gaze, y = Score, color = Participant_ID,  group = Participant_ID)) +
-  geom_point() + geom_line() + theme_minimal() + theme(legend.position = "none")
-
-df_off %>% ggplot(aes(Gaze,Score)) + geom_point()
-df_off %>% ggplot(aes(x = Gaze, y = Score, color = Participant_ID,  group = Participant_ID)) +
-  geom_point() + geom_line() + theme_minimal() + theme(legend.position = "none")
-
 df %>% ggplot(aes(Gaze,Score))+
-    geom_bar(stat = 'summary',
-           fun = "mean",
-           width = 0.5) +
-    geom_errorbar(stat = 'summary',
-                fun.data = "mean_se",
-                width = 0.2) +
-     labs(x = "Gaze direction", 
-        y = "Average credibility score (scale from 1-10)", 
-        title = "Average credibility score by gaze direction") +
-  theme_minimal()
+      geom_bar(stat = 'summary',
+             fun = "mean",
+             width = 0.5,
+             fill = "skyblue") +
+      geom_errorbar(stat = 'summary',
+                  fun.data = "mean_se",
+                  width = 0.2) +
+       labs(x = "Gaze direction", 
+          y = "Mean credibility score (scale from 1-10)", 
+          title = "Mean credibility score by gaze direction") +
+    theme_minimal()
 
-ggplot(df, aes(x = Gaze, y = Score, fill = Gaze)) +
-  geom_boxplot()+
-  labs(x = "Gaze direction",
-       y = "Credibility")+
-         theme_minimal()
+ggplot(df, aes(x = Gaze, y = Score)) +
+    geom_boxplot(fill = "skyblue")+
+    labs(title = "Boxplot of Credibility Scores Across Gaze and Audio Conditions",
+         x = "Gaze direction",
+         y = "Credibility score (scale from 1-10)")+
+           theme_minimal()
+
+df %>% 
+  group_by(Gaze) %>% 
+  summarize(mean_gaze = mean(Score, na.rm = TRUE))
+
+```
+
+```{r normality_data}
+
+#Check linearity
+    m0 <- lm(Score ~ Gaze + Audio, data = df)
+    plot(m0)
+
+#Check the normality of Score
+    round(pastecs :: stat.desc(df$Score, basic = FALSE, norm = TRUE), digits = 2)
+    hist(df$Score)
+    qqnorm(df$Score)
+    qqline(df$Score)
+
+    shapiro.test(df$Score)
 
 ```
 
 
-```{r mixed_effects_model}
 
-m1 <- lmer(Score ~ Gaze + Audio + (1 | Participant_ID), 
-           data = df)
+```{r lmer}
 
-summary(m1)
+# Mixed-effects model
+    model <- lmer(Score ~ Gaze + Audio + (1 + Gaze|Participant_ID), data = df)
+    
+    summary(model)
+
+
+
+# Checking residuals
+
+    plot(fitted(model), resid(model), main = "Residuals vs Fitted", xlab = "Fitted values", ylab = "Residuals")
+    abline(h = 0, col = "red")
+    
+    hist(resid(model), main = "Histogram of Residuals", xlab = "Residuals", breaks = 20)
+    
+    qqnorm(resid(model))
+    qqline(resid(model), col = "red")
+    
+    shapiro.test(resid(model))
+
+
+# Checking normality of random effects
+
+    random_effects <- ranef(model)$Participant_ID[, 1]
+    
+    hist(random_effects, main = "Histogram of Random Effects for Participant_ID", xlab = "Random Effects", breaks = 20)
+    
+    qqnorm(random_effects)
+    qqline(random_effects, col = "red")
+    
+    shapiro.test(random_effects)
+
+
+
 ```
 
 
+
+
+```{r post-hoc}
+
+# Performing pairwise comparisons for Gaze and Audio
+    emmeans_model <- emmeans(model, ~ Gaze + Audio)
+    summary(emmeans_model)
+    pairs(emmeans_model, adjust = "tukey")
+
+# Creating a plot of pairwise comparisons
+    ggplot(as.data.frame(emmeans_model), aes(x = Gaze, y = emmean, color = Audio, group = Audio)) +
+        geom_point() +
+        geom_line() +
+        geom_errorbar(aes(ymin = emmean - SE, ymax = emmean + SE), width = 0.2) + 
+        theme_minimal() +
+        labs(title = "Effect of Gaze and Audio on Credibility",
+             y = "Estimated Mean Credibility Score",
+             x = "Gaze Condition")
+    
+    plot(emmeans_model) + coord_flip() + theme_minimal() +   
+        labs(title = "Effect of Gaze and Audio on Credibility across all conditions",
+             y = "Estimated Mean Credibility Score",
+             x = "Gaze Condition")
+
+```
